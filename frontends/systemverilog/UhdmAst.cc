@@ -1144,7 +1144,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             return c;
         }
         case vpiRealVal:
-            return mkconst_real(val.value.real);
+            return sv_mkconst_real(val.value.real);
         case vpiStringVal:
             return AST::AstNode::mkconst_str(val.value.str);
         default: {
@@ -1155,7 +1155,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
         if (std::strchr(val.value.str, '\'')) {
-            return VERILOG_FRONTEND::const2ast(val.value.str, 0, false);
+            return VERILOG_FRONTEND::sv_const2ast(val.value.str, 0, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             if (size == 0) {
@@ -1163,7 +1163,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 c->is_unsized = true;
                 return c;
             } else {
-                return VERILOG_FRONTEND::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
+                return VERILOG_FRONTEND::sv_const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
             }
         }
     }

@@ -52,7 +52,11 @@ void UhdmAstReport::write(const std::string &directory)
         }
     }
     float coverage = total_handled * 100.f / (total_handled + unhandled.size());
+#ifdef __linux__
     mkdir(directory.c_str(), 0777);
+#else
+    mkdir(directory.c_str());
+#endif
     std::ofstream index_file(directory + "/index.html");
     index_file << "<!DOCTYPE html>\n<html>\n<head>\n<style>h3{margin:0;padding:10}</style>\n</head><body>" << std::endl;
     index_file << "<h2>Overall coverage: " << coverage << "%</h2>" << std::endl;

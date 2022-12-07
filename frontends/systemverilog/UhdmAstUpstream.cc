@@ -7,7 +7,7 @@
 
 YOSYS_NAMESPACE_BEGIN
 
-AST::AstNode *mkconst_real(double d)
+AST::AstNode *sv_mkconst_real(double d)
 {
     AST::AstNode *node = new AST::AstNode(AST::AST_REALVALUE);
     node->realvalue = d;
@@ -20,7 +20,7 @@ namespace VERILOG_FRONTEND
 using namespace AST;
 
 // divide an arbitrary length decimal number by two and return the rest
-static int my_decimal_div_by_two(std::vector<uint8_t> &digits)
+static int sv_my_decimal_div_by_two(std::vector<uint8_t> &digits)
 {
     int carry = 0;
     for (size_t i = 0; i < digits.size(); i++) {
@@ -36,7 +36,7 @@ static int my_decimal_div_by_two(std::vector<uint8_t> &digits)
 }
 
 // find the number of significant bits in a binary number (not including the sign bit)
-static int my_ilog2(int x)
+static int sv_my_ilog2(int x)
 {
     int ret = 0;
     while (x != 0 && x != -1) {
@@ -47,7 +47,7 @@ static int my_ilog2(int x)
 }
 
 // parse a binary, decimal, hexadecimal or octal number with support for special bits ('x', 'z' and '?')
-static void my_strtobin(std::vector<RTLIL::State> &data, const char *str, int len_in_bits, int base, char case_type, bool is_unsized)
+static void sv_my_strtobin(std::vector<RTLIL::State> &data, const char *str, int len_in_bits, int base, char case_type, bool is_unsized)
 {
     // all digits in string (MSB at index 0)
     std::vector<uint8_t> digits;
@@ -73,9 +73,9 @@ static void my_strtobin(std::vector<RTLIL::State> &data, const char *str, int le
 
     if (base == 10) {
         while (!digits.empty())
-            data.push_back(my_decimal_div_by_two(digits) ? State::S1 : State::S0);
+            data.push_back(sv_my_decimal_div_by_two(digits) ? State::S1 : State::S0);
     } else {
-        int bits_per_digit = my_ilog2(base - 1);
+        int bits_per_digit = sv_my_ilog2(base - 1);
         for (auto it = digits.rbegin(), e = digits.rend(); it != e; it++) {
             if (*it > (base - 1) && *it < 0xf0)
                 log_file_error(current_filename, get_line_num(), "Digit larger than %d used in in base-%d constant.\n", base - 1, base);
@@ -123,10 +123,10 @@ static void my_strtobin(std::vector<RTLIL::State> &data, const char *str, int le
 }
 
 // convert the Verilog code for a constant to an AST node
-AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
+AST::AstNode *sv_const2ast(std::string code, char case_type, bool warn_z)
 {
     if (warn_z) {
-        AST::AstNode *ret = const2ast(code, case_type, false);
+        AST::AstNode *ret = sv_const2ast(code, case_type, false);
         if (ret != nullptr && std::find(ret->bits.begin(), ret->bits.end(), RTLIL::State::Sz) != ret->bits.end())
             log_warning("Yosys has only limited support for tri-state logic at the moment. (%s:%d)\n", current_filename.c_str(), get_line_num());
         return ret;
@@ -162,7 +162,7 @@ AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
     // Simple base-10 integer
     if (*endptr == 0) {
         std::vector<RTLIL::State> data;
-        my_strtobin(data, str, -1, 10, case_type, false);
+        sv_my_strtobin(data, str, -1, 10, case_type, false);
         if (data.back() == State::S1)
             data.push_back(State::S0);
         return AST::AstNode::mkconst_bits(data, true);
@@ -184,25 +184,25 @@ AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
         switch (*(endptr + 1)) {
         case 'b':
         case 'B':
-            my_strtobin(data, endptr + 2, len_in_bits, 2, case_type, is_unsized);
+            sv_my_strtobin(data, endptr + 2, len_in_bits, 2, case_type, is_unsized);
             break;
         case 'o':
         case 'O':
-            my_strtobin(data, endptr + 2, len_in_bits, 8, case_type, is_unsized);
+            sv_my_strtobin(data, endptr + 2, len_in_bits, 8, case_type, is_unsized);
             break;
         case 'd':
         case 'D':
-            my_strtobin(data, endptr + 2, len_in_bits, 10, case_type, is_unsized);
+            sv_my_strtobin(data, endptr + 2, len_in_bits, 10, case_type, is_unsized);
             break;
         case 'h':
         case 'H':
-            my_strtobin(data, endptr + 2, len_in_bits, 16, case_type, is_unsized);
+            sv_my_strtobin(data, endptr + 2, len_in_bits, 16, case_type, is_unsized);
             break;
         default:
             char next_char = char(tolower(*(endptr + 1)));
             if (next_char == '0' || next_char == '1' || next_char == 'x' || next_char == 'z') {
                 is_unsized = true;
-                my_strtobin(data, endptr + 1, 1, 2, case_type, is_unsized);
+                sv_my_strtobin(data, endptr + 1, 1, 2, case_type, is_unsized);
             } else {
                 return NULL;
             }

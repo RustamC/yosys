@@ -18,13 +18,13 @@ enum AstNodeTypeExtended {
 };
 }
 
-AST::AstNode *mkconst_real(double d);
+AST::AstNode *sv_mkconst_real(double d);
 
 namespace VERILOG_FRONTEND
 {
 
 // convert the Verilog code for a constant to an AST node
-AST::AstNode *const2ast(std::string code, char case_type, bool warn_z);
+AST::AstNode *sv_const2ast(std::string code, char case_type, bool warn_z);
 
 } // namespace VERILOG_FRONTEND
 
