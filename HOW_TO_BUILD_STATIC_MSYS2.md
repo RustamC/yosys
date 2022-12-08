@@ -41,17 +41,29 @@ UHDM_INSTALL_DIR := D:/opt/yosys
 ```powershell
 make install -j4
 ```
+
+4. Copy required MSYS2 dlls:
+```powershell
+ldd .\yosys.exe | grep mingw64 | awk 'NF == 4 { system("cp --no-clobber " $3 " /d/opt/yosys/bin") }'
+```
+
 # Changes
 ## Yosys
-* Added ghdl-yosys-plugin for static build: https://github.com/ghdl/ghdl-yosys-plugin/
-* Added systemverilog-plugin for static build: https://github.com/chipsalliance/yosys-f4pga-plugins
-  1. Added new Makefile.inc
-  2. Renamed some functions by adding `sv_` prefix to avoid clashes with verilog plugin.
-  3. Added `ENABLE_SV` into Makefile
-  4. CXXFLAGS:
-    1. Changed `-std=c++17` to `-std=gnu++17`
-    2. Added `-DWIN32_LEAN_AND_MEAN` to avoid names clashes with Windows std headers
-  5. LDFLAGS:
-    1. Added to LDLIBS 
-  6. LDLIBS:
-    1. Renamed `-lutil` to `-luuid`
+1. Added ghdl-yosys-plugin for static build: https://github.com/ghdl/ghdl-yosys-plugin/
+2. Added systemverilog-plugin for static build: https://github.com/chipsalliance/yosys-f4pga-plugins
+
+	2.1. Added new Makefile.inc
+
+	2.2. Renamed some functions by adding `sv_` prefix to avoid clashes with verilog plugin.
+
+	2.3. Added `ENABLE_SV` into Makefile
+
+	2.4. CXXFLAGS:
+    - Changed `-std=c++17` to `-std=gnu++17`
+    - Added `-DWIN32_LEAN_AND_MEAN` to avoid names clashes with Windows std headers
+  
+	2.5. LDFLAGS:
+    - Added to LDLIBS 
+  
+	2.6. LDLIBS:
+    - Renamed `-lutil` to `-luuid`
