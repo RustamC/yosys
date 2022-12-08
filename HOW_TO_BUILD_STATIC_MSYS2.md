@@ -47,6 +47,8 @@ make install -j4
 ldd .\yosys.exe | grep mingw64 | awk 'NF == 4 { system("cp --no-clobber " $3 " /d/opt/yosys/bin") }'
 ```
 
+5. Copy ghdl libs from `D:\msys64\mingw64\lib\ghdl` to `D:\opt\yosys\share\yosys`
+
 # Changes
 ## Yosys
 1. Added ghdl-yosys-plugin for static build: https://github.com/ghdl/ghdl-yosys-plugin/
