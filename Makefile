@@ -533,7 +533,7 @@ endif
 
 ifeq ($(ENABLE_SV),1)
 UHDM_INSTALL_DIR ?= $(PREFIX)
-CXXFLAGS += -std=gnu++17 -DWIN32_LEAN_AND_MEAN -Wno-deprecated-declarations -Wno-unused-parameter -I$(UHDM_INSTALL_DIR)/include -I$(UHDM_INSTALL_DIR)/include/Surelog
+CXXFLAGS += -std=gnu++17 -DWIN32_LEAN_AND_MEAN -DPLI_DLLESPEC="" -DPLI_DLLISPEC="" -Wno-deprecated-declarations -Wno-unused-parameter -I$(UHDM_INSTALL_DIR)/include -I$(UHDM_INSTALL_DIR)/include/Surelog
 LDLIBS += -L$(UHDM_INSTALL_DIR)/lib -L$(UHDM_INSTALL_DIR)/lib/uhdm -L$(UHDM_INSTALL_DIR)/lib/Surelog -Wl,--whole-archive -luhdm -Wl,--no-whole-archive -lsurelog -lantlr4-runtime -lflatbuffers -lcapnp -lkj -ldl -luuid -lm -lpthread
 endif
 
