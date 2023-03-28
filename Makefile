@@ -16,6 +16,7 @@ ENABLE_PLUGINS := 1
 ENABLE_READLINE := 1
 ENABLE_EDITLINE := 0
 ENABLE_GHDL := 0
+ENABLE_SV := 0
 ENABLE_VERIFIC := 0
 ENABLE_VERIFIC_EDIF := 0
 ENABLE_VERIFIC_LIBERTY := 0
@@ -90,7 +91,7 @@ all: top-all
 YOSYS_SRC := $(dir $(firstword $(MAKEFILE_LIST)))
 VPATH := $(YOSYS_SRC)
 
-CXXSTD ?= c++11
+CXXSTD ?= gnu++17
 CXXFLAGS := $(CXXFLAGS) -Wall -Wextra -ggdb -I. -I"$(YOSYS_SRC)" -MD -MP -D_YOSYS_ -fPIC -I$(PREFIX)/include
 LDLIBS := $(LDLIBS) -lstdc++ -lm
 PLUGIN_LDFLAGS :=
@@ -249,7 +250,7 @@ LDFLAGS := $(filter-out -rdynamic,$(LDFLAGS)) -static
 LDLIBS := $(filter-out -lrt,$(LDLIBS))
 CXXFLAGS := $(filter-out -fPIC,$(CXXFLAGS))
 CXXFLAGS += -std=$(CXXSTD) -Os
-ABCMKARGS = CC="$(CC)" CXX="$(CXX)" LD="$(LD)" ABC_USE_LIBSTDCXX=1 LIBS="-lm -lpthread -static" OPTFLAGS="-O" \
+ABCMKARGS = CC="$(CC)" CXX="$(CXX)" LD="$(LD)" ABC_USE_LIBSTDCXX=1 LIBS="-lm -lpthread -static -lrt" OPTFLAGS="-O" \
                        ARCHFLAGS="-DABC_USE_STDINT_H -DABC_NO_DYNAMIC_LINKING=1 -Wno-unused-but-set-variable $(ARCHFLAGS)" ABC_USE_NO_READLINE=1
 ifeq ($(DISABLE_ABC_THREADS),1)
 ABCMKARGS += "ABC_USE_NO_PTHREADS=1"
@@ -520,7 +521,16 @@ GHDL_PREFIX ?= $(PREFIX)
 GHDL_INCLUDE_DIR ?= $(GHDL_PREFIX)/include
 GHDL_LIB_DIR ?= $(GHDL_PREFIX)/lib
 CXXFLAGS += -I$(GHDL_INCLUDE_DIR) -DYOSYS_ENABLE_GHDL
-LDLIBS += $(GHDL_LIB_DIR)/libghdl.a $(file <$(GHDL_LIB_DIR)/libghdl.link)
+#For Linux: LDLIBS += $(GHDL_LIB_DIR)/libghdl.a $(file <$(GHDL_LIB_DIR)/libghdl.link) -lgnat -L/home/student/opt/GNAT/2020/lib/gcc/x86_64-pc-linux-gnu/9.3.1/adalib -ldl
+LDLIBS += $(GHDL_LIB_DIR)/libghdl.a $(file <$(GHDL_LIB_DIR)/libghdl.link) -lgnat -LD:/opt/GNAT/2021/lib/gcc/x86_64-w64-mingw32/10.3.1/adalib -ldl
+endif
+
+ifeq ($(ENABLE_SV),1)
+UHDM_INSTALL_DIR ?= $(PREFIX)
+#For Linux: CXXFLAGS += -std=gnu++17 -DWIN32_LEAN_AND_MEAN -Wno-deprecated-declarations -Wno-unused-parameter -I$(UHDM_INSTALL_DIR)/include -I$(UHDM_INSTALL_DIR)/include/Surelog
+CXXFLAGS += -std=gnu++17 -DWIN32_LEAN_AND_MEAN -DPLI_DLLESPEC="" -DPLI_DLLISPEC="" -Wno-deprecated-declarations -Wno-unused-parameter -I$(UHDM_INSTALL_DIR)/include -I$(UHDM_INSTALL_DIR)/include/Surelog
+#For Linux: LDLIBS += -L$(UHDM_INSTALL_DIR)/lib64 -L$(UHDM_INSTALL_DIR)/lib64/uhdm -L$(UHDM_INSTALL_DIR)/lib64/surelog -Wl,--whole-archive -luhdm -Wl,--no-whole-archive -lsurelog -lantlr4-runtime -lflatbuffers -lcapnp -lkj -ldl -luuid -lm -lpthread -lrt
+LDLIBS += -L$(UHDM_INSTALL_DIR)/lib -L$(UHDM_INSTALL_DIR)/lib/uhdm -L$(UHDM_INSTALL_DIR)/lib/surelog -Wl,--whole-archive -luhdm -Wl,--no-whole-archive -lsurelog -lantlr4-runtime-static -lflatbuffers -lcapnp -lkj -ldl -luuid -lm -lpthread
 endif
 
 ifeq ($(ENABLE_VERIFIC),1)
@@ -1015,7 +1025,7 @@ qtcreator:
 vcxsrc: $(GENFILES) $(EXTRA_TARGETS)
 	rm -rf yosys-win32-vcxsrc-$(YOSYS_VER){,.zip}
 	set -e; for f in `ls $(filter %.cc %.cpp,$(GENFILES)) $(addsuffix .cc,$(basename $(OBJS))) $(addsuffix .cpp,$(basename $(OBJS))) 2> /dev/null`; do \
-		echo "Analyse: $$f" >&2; cpp -std=c++11 -MM -I. -D_YOSYS_ $$f; done | sed 's,.*:,,; s,//*,/,g; s,/[^/]*/\.\./,/,g; y, \\,\n\n,;' | grep '^[^/]' | sort -u | grep -v kernel/version_ > srcfiles.txt
+		echo "Analyse: $$f" >&2; cpp -std=gnu++17 -MM -I. -D_YOSYS_ $$f; done | sed 's,.*:,,; s,//*,/,g; s,/[^/]*/\.\./,/,g; y, \\,\n\n,;' | grep '^[^/]' | sort -u | grep -v kernel/version_ > srcfiles.txt
 	bash misc/create_vcxsrc.sh yosys-win32-vcxsrc $(YOSYS_VER) $(GIT_REV)
 	echo "namespace Yosys { extern const char *yosys_version_str; const char *yosys_version_str=\"Yosys (Version Information Unavailable)\"; }" > kernel/version.cc
 	zip yosys-win32-vcxsrc-$(YOSYS_VER)/genfiles.zip $(GENFILES) kernel/version.cc
